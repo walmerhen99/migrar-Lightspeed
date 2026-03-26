@@ -458,6 +458,7 @@
 
             const limit = getBlockLimit();
             const totalBlocks = Math.ceil(data.length / limit);
+            endpoint +=`?origin=${getDomain()}&forceOrigin=1`;
             
             addResponse(`📦 Enviando ${data.length} registros de ${dataKey} en ${totalBlocks} bloque(s) de hasta ${limit} registros`, 'info');
 
@@ -472,7 +473,6 @@
                 if(dataKeyOptions.length > 0){
                     json.itemMatrixes = dataKeyOptions;
                 }
-                endpoint +=`?origin=${getDomain()}&forceOrigin=1`;
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
