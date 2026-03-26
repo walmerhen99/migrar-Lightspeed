@@ -472,8 +472,7 @@
                 if(dataKeyOptions.length > 0){
                     json.itemMatrixes = dataKeyOptions;
                 }
-                endpoint +=`?origin=${getDomain()}`;
-
+                endpoint +=`?origin=${getDomain()}&forceOrigin=1`;
                 try {
                     const response = await fetch(endpoint, {
                         method: 'POST',
