@@ -449,7 +449,7 @@
             document.getElementById('responsePanel').innerHTML = '<div style="color: #858585; text-align: center;">Las respuestas del servidor aparecerán aquí...</div>';
         }
 
-        async function sendInBlocks(data, endpoint, dataKey) {
+        async function sendInBlocks(data, endpoint, dataKey,dataKeyOptions =[]) {
             if (!data || data.length === 0) {
                 addResponse(`⚠ No hay datos de ${dataKey} para enviar`, 'error');
                 return;
@@ -466,6 +466,12 @@
                 const blockNumber = Math.floor(i / limit) + 1;
                 
                 addResponse(`📤 Enviando bloque ${blockNumber}/${totalBlocks} (${block.length} registros)...`, 'info');
+                let json ={
+                    [dataKey]: block,
+                }
+                if(dataKeyOptions.length > 0){
+                    json.itemMatrixes = dataKeyOptions;
+                }
 
                 try {
                     const response = await fetch(endpoint, {
@@ -474,7 +480,7 @@
                             'Content-Type': 'application/json',
                             'Origin':  `https://${getDomain()}.ambitretail.com` 
                         },
-                        body: JSON.stringify({ [dataKey]: block })
+                        body: JSON.stringify(json)
                     });
 
                     const result = await response.json();
@@ -533,14 +539,14 @@
 
             const endpoint =  `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
             addResponse(`📦 Iniciando migración de items a: ${endpoint}`, 'info');
-            await sendInBlocks(jsonData.items, endpoint, 'items');
-        }
+            await sendInBlocks(jsonData.items, endpoint, 'items', jsonData.itemMatrixes);
+        } 
 
         async function migrateSales() {
             const domain = getDomain();
             if (!domain || !jsonData) return;
 
-            const endpoint = `${API_RETAIL}/m/rest/venta/importarVentasDeLightspeed`;
+            const endpoint = `${API_RETAIL}/m/rest/venta/importarVentaLightspeed`;
             addResponse(`💰 Iniciando migración de ventas a: ${endpoint}`, 'info');
             await sendInBlocks(jsonData.sales, endpoint, 'sales');
         }
