@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ambit Retail - Gestor de Migración</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .file-upload {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="file"] {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .data-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #333;
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .config-inputs {
+            display: grid;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            color: #333;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .input-group input {
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .url-preview {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #495057;
+            margin-top: 5px;
+        }
+
+        .migration-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .migration-buttons .btn {
+            width: 100%;
+            padding: 15px;
+        }
+
+        .response-panel {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .response-entry {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #252526;
+            border-radius: 5px;
+            border-left: 3px solid #667eea;
+        }
+
+        .response-entry.success {
+            border-left-color: #28a745;
+        }
+
+        .response-entry.error {
+            border-left-color: #dc3545;
+        }
+
+        .response-timestamp {
+            color: #858585;
+            font-size: 0.85em;
+            margin-bottom: 5px;
+        }
+
+        .response-content {
+            color: #d4d4d4;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Gestor de Migración - Ambit Retail</h1>
+
+        <!-- Sección de Carga de Datos -->
+        <div class="section">
+            <h2>📁 Cargar Datos JSON</h2>
+            <div class="file-upload">
+                <input type="file" id="jsonFile" accept=".json" />
+                <button class="btn btn-primary" onclick="loadJsonFile()">Cargar Archivo</button>
+            </div>
+            
+            <div id="dataStats" class="data-stats" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-label">Locales (Shops)</div>
+                    <div class="stat-value" id="shopsCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Items</div>
+                    <div class="stat-value" id="itemsCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Ventas (Sales)</div>
+                    <div class="stat-value" id="salesCount">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Item Matrices</div>
+                    <div class="stat-value" id="itemMatrixesCount">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración -->
+        <div class="section">
+            <h2>⚙️ Configuración</h2>
+            <div class="config-inputs">
+                <div class="input-group">
+                    <label for="domainInput">Dominio (para https://*.ambitretail.com/)</label>
+                    <input type="text" id="domainInput" placeholder="Ejemplo: mitienda" oninput="updateUrlPreview()" />
+                    <div class="url-preview" id="urlPreview">https://<strong>mitienda</strong>.ambitretail.com/</div>
+                </div>
+                <div class="input-group">
+                    <label for="blockLimit">Límite de Registros por Bloque</label>
+                    <input type="number" id="blockLimit" value="100" min="1" placeholder="Ejemplo: 100" />
+                    <small style="color: #666; margin-top: 5px;">Los datos se enviarán en bloques del tamaño especificado</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de Migración -->
+        <div class="section">
+            <h2>🔄 Operaciones de Migración</h2>
+            <div class="alert alert-info">
+                <strong>Información:</strong> Asegúrate de cargar los datos JSON y configurar el dominio antes de iniciar cualquier migración.
+            </div>
+            <div class="migration-buttons">
+                <button class="btn btn-success" onclick="migrateShops()" id="btnShops" disabled>
+                    Migrar Locales
+                </button>
+                <button class="btn btn-info" onclick="migrateClients()" id="btnClients" disabled>
+                    Migrar Clientes
+                </button>
+                <button class="btn btn-warning" onclick="migrateAttributes()" id="btnAttributes" disabled>
+                    Migrar Atributos
+                </button>
+                <button class="btn btn-primary" onclick="migrateItems()" id="btnItems" disabled>
+                    Migrar Items
+                </button>
+                <button class="btn btn-danger" onclick="migrateSales()" id="btnSales" disabled>
+                    Migrar Ventas
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel de Respuestas -->
+        <div class="section">
+            <h2>📊 Panel de Respuestas</h2>
+            <button class="btn btn-primary" onclick="clearResponses()" style="margin-bottom: 10px;">Limpiar Respuestas</button>
+            <div class="response-panel" id="responsePanel">
+                <div style="color: #858585; text-align: center;">Las respuestas del servidor aparecerán aquí...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jsonData = null;
+        const API_BASE = 'https://admin.api.ambitretail.com';
+        const API_RETAIL= 'https://retail.api.ambitretail.com';
+
+        function loadJsonFile() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                addResponse('Error: No se seleccionó ningún archivo', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    jsonData = JSON.parse(e.target.result);
+                    updateDataStats();
+                    enableButtons();
+                    addResponse('✓ Archivo JSON cargado correctamente', 'success');
+                } catch (error) {
+                    addResponse(`Error al parsear JSON: ${error.message}`, 'error');
+                    jsonData = null;
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function updateDataStats() {
+            document.getElementById('dataStats').style.display = 'grid';
+            document.getElementById('shopsCount').textContent = jsonData.shops?.length || 0;
+            document.getElementById('itemsCount').textContent = jsonData.items?.length || 0;
+            document.getElementById('salesCount').textContent = jsonData.sales?.length || 0;
+            document.getElementById('itemMatrixesCount').textContent = jsonData.itemMatrixes?.length || 0;
+        }
+
+        function updateUrlPreview() {
+            const domain = document.getElementById('domainInput').value || 'mitienda';
+            document.getElementById('urlPreview').innerHTML = `https://<strong>${domain}</strong>.ambitretail.com/`;
+        }
+
+        function enableButtons() {
+            const buttons = ['btnShops', 'btnClients', 'btnAttributes', 'btnItems', 'btnSales'];
+            buttons.forEach(btnId => {
+                document.getElementById(btnId).disabled = false;
+            });
+        }
+
+        function getDomain() {
+            const domain = document.getElementById('domainInput').value.trim();
+            if (!domain) {
+                addResponse('Error: Debes ingresar un dominio', 'error');
+                return null;
+            }
+            return domain;
+        }
+
+        function getBlockLimit() {
+            return parseInt(document.getElementById('blockLimit').value) || 100;
+        }
+
+        function addResponse(message, type = 'info') {
+            const panel = document.getElementById('responsePanel');
+            const timestamp = new Date().toLocaleString('es-ES');
+            
+            const entry = document.createElement('div');
+            entry.className = `response-entry ${type}`;
+            entry.innerHTML = `
+                <div class="response-timestamp">[${timestamp}]</div>
+                <div class="response-content">${message}</div>
+            `;
+            
+            if (panel.querySelector('.response-panel > div[style*="text-align: center"]')) {
+                panel.innerHTML = '';
+            }
+            
+            panel.insertBefore(entry, panel.firstChild);
+        }
+
+        function clearResponses() {
+            document.getElementById('responsePanel').innerHTML = '<div style="color: #858585; text-align: center;">Las respuestas del servidor aparecerán aquí...</div>';
+        }
+
+        async function sendInBlocks(data, endpoint, dataKey) {
+            if (!data || data.length === 0) {
+                addResponse(`⚠ No hay datos de ${dataKey} para enviar`, 'error');
+                return;
+            }
+            
+
+            const limit = getBlockLimit();
+            const totalBlocks = Math.ceil(data.length / limit);
+            
+            addResponse(`📦 Enviando ${data.length} registros de ${dataKey} en ${totalBlocks} bloque(s) de hasta ${limit} registros`, 'info');
+
+            for (let i = 0; i < data.length; i += limit) {
+                const block = data.slice(i, i + limit);
+                const blockNumber = Math.floor(i / limit) + 1;
+                
+                addResponse(`📤 Enviando bloque ${blockNumber}/${totalBlocks} (${block.length} registros)...`, 'info');
+
+                try {
+                    const response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Origin':  `https://${getDomain()}.ambitretail.com` 
+                        },
+                        body: JSON.stringify({ [dataKey]: block })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        addResponse(`✓ Bloque ${blockNumber}/${totalBlocks} enviado exitosamente: ${JSON.stringify(result)}`, 'success');
+                    } else {
+                        addResponse(`✗ Error en bloque ${blockNumber}/${totalBlocks}: ${JSON.stringify(result)}`, 'error');
+                    }
+                } catch (error) {
+                    addResponse(`✗ Error de red en bloque ${blockNumber}/${totalBlocks}: ${error.message}`, 'error');
+                }
+
+                // Pequeña pausa entre bloques para no saturar el servidor
+                if (i + limit < data.length) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+
+            addResponse(`✓ Migración de ${dataKey} completada`, 'success');
+        }
+
+        async function migrateShops() {
+            const domain = getDomain();
+            if (!domain || !jsonData) return;
+
+            const endpoint = `${API_BASE}/m/rest/local/importarLocalesLightspeed/${domain}`;
+            addResponse(`🏪 Iniciando migración de locales a: ${endpoint}`, 'info');
+            await sendInBlocks(jsonData.shops, endpoint, 'shops');
+        }
+
+        async function migrateClients() {
+            const domain = getDomain();
+            if (!domain || !jsonData) return;
+
+            const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed/${domain}`;
+            addResponse(`👥 Iniciando migración de clientes a: ${endpoint}`, 'info');
+            
+            // Asumiendo que los clientes vienen en shops o hay una propiedad clients
+            const clients = jsonData.clients || [];
+            await sendInBlocks(clients, endpoint, 'clients');
+        }
+
+        async function migrateAttributes() {
+            const domain = getDomain();
+            if (!domain || !jsonData) return;
+
+            const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
+            addResponse(`🏷️ Iniciando migración de atributos a: ${endpoint}`, 'info');
+            await sendInBlocks(jsonData.itemMatrixes, endpoint, 'itemMatrixes');
+        }
+
+        async function migrateItems() {
+            const domain = getDomain();
+            if (!domain || !jsonData) return;
+
+            const endpoint =  `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
+            addResponse(`📦 Iniciando migración de items a: ${endpoint}`, 'info');
+            await sendInBlocks(jsonData.items, endpoint, 'items');
+        }
+
+        async function migrateSales() {
+            const domain = getDomain();
+            if (!domain || !jsonData) return;
+
+            const endpoint = `${API_RETAIL}/m/rest/venta/importarVentasDeLightspeed`;
+            addResponse(`💰 Iniciando migración de ventas a: ${endpoint}`, 'info');
+            await sendInBlocks(jsonData.sales, endpoint, 'sales');
+        }
+    </script>
+</body>
+</html>
