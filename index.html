@@ -472,6 +472,7 @@
                 if(dataKeyOptions.length > 0){
                     json.itemMatrixes = dataKeyOptions;
                 }
+                endpoint +=`?origin=${getDomain()}`;
 
                 try {
                     const response = await fetch(endpoint, {
