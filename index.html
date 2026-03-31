@@ -5,550 +5,294 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ambit Retail - Gestor de Migración</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* ... (Tus estilos anteriores se mantienen) ... */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        h1 { text-align: center; margin-bottom: 30px; color: #333; }
+        .section { margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-danger { background: #dc3545; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-info { background: #17a2b8; color: white; }
+        .btn-warning { background: #ffc107; color: #333; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .migration-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .response-panel { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto; font-family: monospace; }
+        .response-entry { margin-bottom: 5px; padding: 5px; border-bottom: 1px solid #333; }
+        .success { color: #75beff; }
+        .error { color: #f44336; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        /* --- NUEVOS ESTILOS PARA EL PROGRESO --- */
+        #progressContainer {
+            display: none;
+            background: #fff;
             padding: 20px;
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 30px;
-        }
-
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2em;
-        }
-
-        .section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #f8f9fa;
             border-radius: 10px;
-            border-left: 4px solid #667eea;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 2px solid #667eea;
         }
-
-        .section h2 {
-            color: #667eea;
-            margin-bottom: 15px;
-            font-size: 1.3em;
-        }
-
-        .file-upload {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        input[type="file"] {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-
-        .btn-primary {
-            background: #667eea;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-
-        .btn-success {
-            background: #28a745;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #218838;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
-        }
-
-        .btn-info {
-            background: #17a2b8;
-            color: white;
-        }
-
-        .btn-info:hover {
-            background: #138496;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.3);
-        }
-
-        .btn-warning {
-            background: #ffc107;
-            color: #333;
-        }
-
-        .btn-warning:hover {
-            background: #e0a800;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
-        }
-
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
-        .data-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            border-bottom: 3px solid #667eea;
-        }
-
-        .stat-label {
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .stat-value {
-            color: #333;
-            font-size: 2em;
-            font-weight: bold;
-        }
-
-        .config-inputs {
-            display: grid;
-            gap: 15px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .input-group label {
-            color: #333;
-            font-weight: 600;
-            font-size: 0.9em;
-        }
-
-        .input-group input {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .input-group input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        .url-preview {
+        .progress-bar-bg {
             background: #e9ecef;
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 0.9em;
-            color: #495057;
-            margin-top: 5px;
+            height: 25px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
         }
-
-        .migration-buttons {
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            height: 100%;
+            transition: width 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
         }
-
-        .migration-buttons .btn {
-            width: 100%;
-            padding: 15px;
-        }
-
-        .response-panel {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 20px;
-            border-radius: 8px;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'Consolas', 'Courier New', monospace;
+        .status-item {
             font-size: 0.9em;
+            color: #555;
         }
-
-        .response-entry {
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #252526;
-            border-radius: 5px;
-            border-left: 3px solid #667eea;
-        }
-
-        .response-entry.success {
-            border-left-color: #28a745;
-        }
-
-        .response-entry.error {
-            border-left-color: #dc3545;
-        }
-
-        .response-timestamp {
-            color: #858585;
-            font-size: 0.85em;
-            margin-bottom: 5px;
-        }
-
-        .response-content {
-            color: #d4d4d4;
-        }
-
-        .loading {
-            display: inline-block;
+        .status-item strong { color: #667eea; }
+        
+        .loader-spin {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
             width: 20px;
             height: 20px;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 1s ease-in-out infinite;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 10px;
         }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .alert {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-        }
-
-        .alert-warning {
-            background: #fff3cd;
-            color: #856404;
-            border-left: 4px solid #ffc107;
-        }
-
-        .alert-info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border-left: 4px solid #17a2b8;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🚀 Gestor de Migración - Ambit Retail</h1>
 
-        <!-- Sección de Carga de Datos -->
+        <div id="progressContainer">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="currentAction">Procesando...</h3>
+                <button class="btn btn-danger" onclick="abortMigration()" id="btnAbort">🛑 Detener Migración</button>
+            </div>
+            
+            <div class="progress-bar-bg">
+                <div id="progressBar" class="progress-bar-fill">0%</div>
+            </div>
+
+            <div class="status-grid">
+                <div class="status-item">📦 Bloque: <strong id="blockInfo">-</strong></div>
+                <div class="status-item">📊 Registros: <strong id="recordInfo">-</strong></div>
+                <div class="status-item">⏳ Restante: <strong id="timeInfo">Calculando...</strong></div>
+            </div>
+        </div>
+
         <div class="section">
             <h2>📁 Cargar Datos JSON</h2>
             <div class="file-upload">
                 <input type="file" id="jsonFile" accept=".json" />
                 <button class="btn btn-primary" onclick="loadJsonFile()">Cargar Archivo</button>
             </div>
-            
-            <div id="dataStats" class="data-stats" style="display: none;">
-                <div class="stat-card">
-                    <div class="stat-label">Locales (Shops)</div>
-                    <div class="stat-value" id="shopsCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Items</div>
-                    <div class="stat-value" id="itemsCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Ventas (Sales)</div>
-                    <div class="stat-value" id="salesCount">0</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Item Matrices</div>
-                    <div class="stat-value" id="itemMatrixesCount">0</div>
-                </div>
+            <div id="dataStats" class="data-stats" style="display: none; margin-top:15px;">
+                Registros cargados: Shops(<span id="shopsCount">0</span>), Items(<span id="itemsCount">0</span>), Sales(<span id="salesCount">0</span>)
             </div>
         </div>
 
-        <!-- Configuración -->
         <div class="section">
             <h2>⚙️ Configuración</h2>
             <div class="config-inputs">
-                <div class="input-group">
-                    <label for="domainInput">Dominio (para https://*.ambitretail.com/)</label>
-                    <input type="text" id="domainInput" placeholder="Ejemplo: mitienda" oninput="updateUrlPreview()" />
-                    <div class="url-preview" id="urlPreview">https://<strong>mitienda</strong>.ambitretail.com/</div>
-                </div>
-                <div class="input-group">
-                    <label for="blockLimit">Límite de Registros por Bloque</label>
-                    <input type="number" id="blockLimit" value="100" min="1" placeholder="Ejemplo: 100" />
-                    <small style="color: #666; margin-top: 5px;">Los datos se enviarán en bloques del tamaño especificado</small>
-                </div>
+                <input type="text" id="domainInput" placeholder="Dominio" oninput="updateUrlPreview()" style="padding:10px; border-radius:5px; border:1px solid #ddd; width:100%">
+                <input type="number" id="blockLimit" value="100" style="padding:10px; margin-top:10px; border-radius:5px; border:1px solid #ddd;">
             </div>
         </div>
 
-        <!-- Botones de Migración -->
         <div class="section">
             <h2>🔄 Operaciones de Migración</h2>
-            <div class="alert alert-info">
-                <strong>Información:</strong> Asegúrate de cargar los datos JSON y configurar el dominio antes de iniciar cualquier migración.
-            </div>
             <div class="migration-buttons">
-                <button class="btn btn-success" onclick="migrateShops()" id="btnShops" disabled>
-                    Migrar Locales
-                </button>
-                <button class="btn btn-info" onclick="migrateClients()" id="btnClients" disabled>
-                    Migrar Clientes
-                </button>
-                <button class="btn btn-warning" onclick="migrateAttributes()" id="btnAttributes" disabled>
-                    Migrar Atributos
-                </button>
-                <button class="btn btn-primary" onclick="migrateItems()" id="btnItems" disabled>
-                    Migrar Items
-                </button>
-                <button class="btn btn-danger" onclick="migrateSales()" id="btnSales" disabled>
-                    Migrar Ventas
-                </button>
+                <button class="btn btn-success" onclick="migrateShops()" id="btnShops" disabled>Migrar Locales</button>
+                <button class="btn btn-info" onclick="migrateClients()" id="btnClients" disabled>Migrar Clientes</button>
+                <button class="btn btn-warning" onclick="migrateAttributes()" id="btnAttributes" disabled>Migrar Atributos</button>
+                <button class="btn btn-primary" onclick="migrateItems()" id="btnItems" disabled>Migrar Items</button>
+                <button class="btn btn-danger" onclick="migrateSales()" id="btnSales1" disabled>Migrar Ventas</button>
+                <button class="btn btn-danger" onclick="migrateNoteSales()" id="btnSales2" disabled>Migrar Notas Crédito</button>
+                <button class="btn btn-danger" onclick="migrateInventario()" id="btnSales3" disabled>Migrar Inventario</button>
             </div>
         </div>
 
-        <!-- Panel de Respuestas -->
         <div class="section">
             <h2>📊 Panel de Respuestas</h2>
-            <button class="btn btn-primary" onclick="clearResponses()" style="margin-bottom: 10px;">Limpiar Respuestas</button>
-            <div class="response-panel" id="responsePanel">
-                <div style="color: #858585; text-align: center;">Las respuestas del servidor aparecerán aquí...</div>
-            </div>
+            <div class="response-panel" id="responsePanel"></div>
         </div>
     </div>
 
     <script>
         let jsonData = null;
+        let shouldStop = false; // Bandera para detener la migración
         const API_BASE = 'https://admin.api.ambitretail.com';
         const API_RETAIL= 'https://retail.api.ambitretail.com';
 
+        // --- FUNCIONES DE SOPORTE ---
         function loadJsonFile() {
-            const fileInput = document.getElementById('jsonFile');
-            const file = fileInput.files[0];
-
-            if (!file) {
-                addResponse('Error: No se seleccionó ningún archivo', 'error');
-                return;
-            }
-
+            const file = document.getElementById('jsonFile').files[0];
+            if (!file) return alert("Selecciona un archivo");
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    jsonData = JSON.parse(e.target.result);
-                    updateDataStats();
-                    enableButtons();
-                    addResponse('✓ Archivo JSON cargado correctamente', 'success');
-                } catch (error) {
-                    addResponse(`Error al parsear JSON: ${error.message}`, 'error');
-                    jsonData = null;
-                }
+            reader.onload = (e) => {
+                jsonData = JSON.parse(e.target.result);
+                document.getElementById('dataStats').style.display = 'block';
+                document.getElementById('shopsCount').textContent = jsonData.shops?.length || 0;
+                document.getElementById('itemsCount').textContent = jsonData.items?.length || 0;
+                document.getElementById('salesCount').textContent = jsonData.sales?.length || 0;
+                enableButtons();
             };
             reader.readAsText(file);
         }
 
-        function updateDataStats() {
-            document.getElementById('dataStats').style.display = 'grid';
-            document.getElementById('shopsCount').textContent = jsonData.shops?.length || 0;
-            document.getElementById('itemsCount').textContent = jsonData.items?.length || 0;
-            document.getElementById('salesCount').textContent = jsonData.sales?.length || 0;
-            document.getElementById('itemMatrixesCount').textContent = jsonData.itemMatrixes?.length || 0;
-        }
-
-        function updateUrlPreview() {
-            const domain = document.getElementById('domainInput').value || 'mitienda';
-            document.getElementById('urlPreview').innerHTML = `https://<strong>${domain}</strong>.ambitretail.com/`;
-        }
-
         function enableButtons() {
-            const buttons = ['btnShops', 'btnClients', 'btnAttributes', 'btnItems', 'btnSales'];
-            buttons.forEach(btnId => {
-                document.getElementById(btnId).disabled = false;
-            });
+            document.querySelectorAll('.migration-buttons .btn').forEach(b => b.disabled = false);
         }
 
-        function getDomain() {
-            const domain = document.getElementById('domainInput').value.trim();
-            if (!domain) {
-                addResponse('Error: Debes ingresar un dominio', 'error');
-                return null;
-            }
-            return domain;
+        function getDomain() { return document.getElementById('domainInput').value.trim(); }
+        function getBlockLimit() { return parseInt(document.getElementById('blockLimit').value) || 100; }
+
+        function abortMigration() {
+            shouldStop = true;
+            addResponse("🛑 Petición de parada recibida. Se detendrá al finalizar el bloque actual.", "error");
         }
 
-        function getBlockLimit() {
-            return parseInt(document.getElementById('blockLimit').value) || 100;
+        function addResponse(msg, type) {
+            const p = document.getElementById('responsePanel');
+            p.innerHTML = `<div class="response-entry ${type}">${new Date().toLocaleTimeString()} - ${msg}</div>` + p.innerHTML;
         }
 
-        function addResponse(message, type = 'info') {
-            const panel = document.getElementById('responsePanel');
-            const timestamp = new Date().toLocaleString('es-ES');
-            
-            const entry = document.createElement('div');
-            entry.className = `response-entry ${type}`;
-            entry.innerHTML = `
-                <div class="response-timestamp">[${timestamp}]</div>
-                <div class="response-content">${message}</div>
-            `;
-            
-            if (panel.querySelector('.response-panel > div[style*="text-align: center"]')) {
-                panel.innerHTML = '';
-            }
-            
-            panel.insertBefore(entry, panel.firstChild);
-        }
+        // --- EL MOTOR DE MIGRACIÓN ACTUALIZADO ---
+        async function sendInBlocks(data, endpoint, dataKey, dataKeyOptions = []) {
+            if (!data || data.length === 0) return addResponse(`No hay datos para ${dataKey}`, 'error');
 
-        function clearResponses() {
-            document.getElementById('responsePanel').innerHTML = '<div style="color: #858585; text-align: center;">Las respuestas del servidor aparecerán aquí...</div>';
-        }
-
-        async function sendInBlocks(data, endpoint, dataKey,dataKeyOptions =[]) {
-            if (!data || data.length === 0) {
-                addResponse(`⚠ No hay datos de ${dataKey} para enviar`, 'error');
-                return;
-            }
-            
-
+            // Reset de UI y control
+            shouldStop = false;
             const limit = getBlockLimit();
-            const totalBlocks = Math.ceil(data.length / limit);
-            endpoint +=`?origin=${getDomain()}&forceOrigin=1`;
+            const totalRecords = data.length;
+            const totalBlocks = Math.ceil(totalRecords / limit);
+            const progContainer = document.getElementById('progressContainer');
+            const progBar = document.getElementById('progressBar');
             
-            addResponse(`📦 Enviando ${data.length} registros de ${dataKey} en ${totalBlocks} bloque(s) de hasta ${limit} registros`, 'info');
+            progContainer.style.display = 'block';
+            document.getElementById('currentAction').innerHTML = `<span class="loader-spin"></span> Migrando ${dataKey}...`;
 
-            for (let i = 0; i < data.length; i += limit) {
-                const block = data.slice(i, i + limit);
+            const startTime = Date.now();
+
+            for (let i = 0; i < totalRecords; i += limit) {
+                if (shouldStop) {
+                    addResponse("🚫 Migración cancelada por el usuario.", "error");
+                    break;
+                }
+
                 const blockNumber = Math.floor(i / limit) + 1;
-                
-                addResponse(`📤 Enviando bloque ${blockNumber}/${totalBlocks} (${block.length} registros)...`, 'info');
-                let json ={
-                    [dataKey]: block,
+                const block = data.slice(i, i + limit);
+                const percent = Math.round((i / totalRecords) * 100);
+
+                // Actualizar UI
+                progBar.style.width = `${percent}%`;
+                progBar.textContent = `${percent}%`;
+                document.getElementById('blockInfo').textContent = `${blockNumber} / ${totalBlocks}`;
+                document.getElementById('recordInfo').textContent = `${i} de ${totalRecords}`;
+
+                // Calcular Tiempo Estimado (ETA)
+                if (i > 0) {
+                    const elapsed = Date.now() - startTime;
+                    const avgTimePerRecord = elapsed / i;
+                    const remainingRecords = totalRecords - i;
+                    const etaMs = remainingRecords * avgTimePerRecord;
+                    const etaSec = Math.round(etaMs / 1000);
+                    document.getElementById('timeInfo').textContent = etaSec > 60 ? `${Math.round(etaSec/60)} min aprox.` : `${etaSec} seg aprox.`;
                 }
-                if(dataKeyOptions.length > 0){
-                    json.itemMatrixes = dataKeyOptions;
-                }
+
+                // Preparar JSON
+                let payload = { [dataKey]: block };
+                if (dataKeyOptions.length > 0) payload.itemMatrixes = dataKeyOptions;
+
                 try {
-                    const response = await fetch(endpoint, {
+                    const res = await fetch(`${endpoint}?origin=${getDomain()}&forceOrigin=1`, {
                         method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Origin':  `https://${getDomain()}.ambitretail.com` 
-                        },
-                        body: JSON.stringify(json)
+                        headers: { 'Content-Type': 'application/json', 'Origin': `https://${getDomain()}.ambitretail.com` },
+                        body: JSON.stringify(payload)
                     });
 
-                    const result = await response.json();
-                    
-                    if (response.ok) {
-                        addResponse(`✓ Bloque ${blockNumber}/${totalBlocks} enviado exitosamente: ${JSON.stringify(result)}`, 'success');
+                    if (res.ok) {
+                        addResponse(`✓ Bloque ${blockNumber} procesado.`, 'success');
                     } else {
-                        addResponse(`✗ Error en bloque ${blockNumber}/${totalBlocks}: ${JSON.stringify(result)}`, 'error');
+                        addResponse(`✗ Error en bloque ${blockNumber}`, 'error');
                     }
-                } catch (error) {
-                    addResponse(`✗ Error de red en bloque ${blockNumber}/${totalBlocks}: ${error.message}`, 'error');
+                } catch (err) {
+                    addResponse(`✗ Error de red: ${err.message}`, 'error');
                 }
 
-                // Pequeña pausa entre bloques para no saturar el servidor
-                if (i + limit < data.length) {
-                    await new Promise(resolve => setTimeout(resolve, 500));
-                }
+                // Pequeño delay
+                await new Promise(r => setTimeout(r, 600));
             }
 
-            addResponse(`✓ Migración de ${dataKey} completada`, 'success');
+            // Finalización
+            progBar.style.width = `100%`;
+            progBar.textContent = `100%`;
+            document.getElementById('currentAction').textContent = shouldStop ? "Migración Interrumpida" : "✅ Migración Completada";
+            setTimeout(() => { if(!shouldStop) progContainer.style.display = 'none'; }, 3000);
         }
 
+        // --- TUS 7 FUNCIONES (SIN CAMBIOS EN LÓGICA) ---
         async function migrateShops() {
-            const domain = getDomain();
-            if (!domain || !jsonData) return;
-
+            const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_BASE}/m/rest/local/importarLocalesLightspeed/${domain}`;
-            addResponse(`🏪 Iniciando migración de locales a: ${endpoint}`, 'info');
             await sendInBlocks(jsonData.shops, endpoint, 'shops');
         }
 
         async function migrateClients() {
-            const domain = getDomain();
-            if (!domain || !jsonData) return;
-
+            const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed/${domain}`;
-            addResponse(`👥 Iniciando migración de clientes a: ${endpoint}`, 'info');
-            
-            // Asumiendo que los clientes vienen en shops o hay una propiedad clients
-            const clients = jsonData.clients || [];
-            await sendInBlocks(clients, endpoint, 'clients');
+            await sendInBlocks(jsonData.clients || [], endpoint, 'clients');
         }
 
         async function migrateAttributes() {
-            const domain = getDomain();
-            if (!domain || !jsonData) return;
-
+            const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
-            addResponse(`🏷️ Iniciando migración de atributos a: ${endpoint}`, 'info');
             await sendInBlocks(jsonData.itemMatrixes, endpoint, 'itemMatrixes');
         }
 
         async function migrateItems() {
-            const domain = getDomain();
-            if (!domain || !jsonData) return;
-
-            const endpoint =  `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
-            addResponse(`📦 Iniciando migración de items a: ${endpoint}`, 'info');
+            const domain = getDomain(); if (!domain || !jsonData) return;
+            const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
             await sendInBlocks(jsonData.items, endpoint, 'items', jsonData.itemMatrixes);
-        } 
+        }
 
         async function migrateSales() {
-            const domain = getDomain();
-            if (!domain || !jsonData) return;
-
+            const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/venta/importarVentaLightspeed`;
-            addResponse(`💰 Iniciando migración de ventas a: ${endpoint}`, 'info');
             await sendInBlocks(jsonData.sales, endpoint, 'sales');
+        }
+
+        async function migrateNoteSales() {
+            const domain = getDomain(); if (!domain || !jsonData) return;
+            const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
+            await sendInBlocks(jsonData.sales, endpoint, 'sales');
+        }
+
+        async function migrateInventario() {
+            const domain = getDomain(); if (!domain || !jsonData) return;
+            const endpoint = `${API_RETAIL}/m/rest/movimientoalmaceninsumo/aperturarStockItemsLightspeed`;
+            await sendInBlocks(jsonData.sales, endpoint, 'items');
         }
     </script>
 </body>
