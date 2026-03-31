@@ -292,7 +292,7 @@
         async function migrateInventario() {
             const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/movimientoalmaceninsumo/aperturarStockItemsLightspeed`;
-            await sendInBlocks(jsonData.sales, endpoint, 'items');
+            await sendInBlocks(jsonData.items, endpoint, 'items');
         }
     </script>
 </body>
