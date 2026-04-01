@@ -286,13 +286,13 @@
         async function migrateNoteSales() {
             const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
-            await sendInBlocks(jsonData.sales, endpoint, 'sales');
+            await sendInBlocks(jsonData.sales, endpoint, 'note sales');
         }
 
         async function migrateInventario() {
             const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/movimientoalmaceninsumo/aperturarStockItemsLightspeed`;
-            await sendInBlocks(jsonData.items, endpoint, 'items');
+            await sendInBlocks(jsonData.items, endpoint, 'inventory');
         }
     </script>
 </body>
