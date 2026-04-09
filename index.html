@@ -286,7 +286,7 @@
         async function migrateNoteSales() {
             const domain = getDomain(); if (!domain || !jsonData) return;
             const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
-            await sendInBlocks(jsonData.sales, endpoint, 'note sales');
+            await sendInBlocks(jsonData.sales, endpoint, 'sales');
         }
 
         async function migrateInventario() {
