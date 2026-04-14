@@ -310,7 +310,144 @@
             const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
             // FILTRO APLICADO AQUÍ
             const filteredSales = getFilteredData(jsonData.sales, 'sales');
-            await sendInBlocks(filteredSales, endpoint, 'sales');
+            
+            // Separar ventas normales de notas de crédito (ventas con total negativo)
+            const allSales = filteredSales || [];
+            
+            // Construir índice de saleLineID -> sale para encontrar ventas originales
+            const saleLineIDToSale = {};
+            allSales.forEach(sale => {
+                if (!sale.SaleLines?.SaleLine) return;
+                const lines = Array.isArray(sale.SaleLines.SaleLine) ? sale.SaleLines.SaleLine : [sale.SaleLines.SaleLine];
+                lines.forEach(line => {
+                    if (line.saleLineID) {
+                        saleLineIDToSale[line.saleLineID] = sale;
+                    }
+                });
+            });
+            
+            // Identificar notas de crédito (ventas con calcTotal negativo y líneas con cantidad negativa)
+            const notasCredito = allSales.filter(sale => {
+                if (sale.voided === 'true') return false;
+                if (!sale.completed || sale.completed === 'false') return false;
+                const calcTotal = parseFloat(sale.calcTotal) || 0;
+                if (calcTotal >= 0) return false;
+                if (!sale.SaleLines?.SaleLine) return false;
+                const lines = Array.isArray(sale.SaleLines.SaleLine) ? sale.SaleLines.SaleLine : [sale.SaleLines.SaleLine];
+                return lines.some(ln => (parseFloat(ln.unitQuantity) || 0) < 0);
+            });
+            
+            if (notasCredito.length === 0) {
+                return addResponse('No se encontraron notas de crédito para migrar', 'error');
+            }
+            
+            addResponse(`📋 Encontradas ${notasCredito.length} notas de crédito para procesar`, 'info');
+            
+            // Para cada nota de crédito, encontrar sus ventas originales relacionadas
+            const notasConVentasOriginales = notasCredito.map(nc => {
+                const lines = Array.isArray(nc.SaleLines.SaleLine) ? nc.SaleLines.SaleLine : [nc.SaleLines.SaleLine];
+                const ventasRelacionadas = new Set();
+                
+                lines.forEach(line => {
+                    const parentSaleLineID = line.parentSaleLineID;
+                    if (parentSaleLineID && saleLineIDToSale[parentSaleLineID]) {
+                        ventasRelacionadas.add(saleLineIDToSale[parentSaleLineID]);
+                    }
+                });
+                
+                return {
+                    notaCredito: nc,
+                    ventasOriginales: Array.from(ventasRelacionadas)
+                };
+            });
+            
+            // Contar cuántas NC tienen ventas relacionadas encontradas
+            const conVentas = notasConVentasOriginales.filter(x => x.ventasOriginales.length > 0).length;
+            const sinVentas = notasConVentasOriginales.filter(x => x.ventasOriginales.length === 0).length;
+            addResponse(`✓ ${conVentas} NC con venta original encontrada, ${sinVentas} sin venta en el JSON`, 'info');
+            
+            // Enviar en bloques incluyendo las ventas originales
+            await sendNotaCreditoBlocks(notasConVentasOriginales, endpoint);
+        }
+        
+        async function sendNotaCreditoBlocks(notasConVentas, endpoint) {
+            if (!notasConVentas || notasConVentas.length === 0) return;
+            
+            shouldStop = false;
+            const limit = getBlockLimit();
+            const totalRecords = notasConVentas.length;
+            const totalBlocks = Math.ceil(totalRecords / limit);
+            const progContainer = document.getElementById('progressContainer');
+            const progBar = document.getElementById('progressBar');
+            
+            progContainer.style.display = 'block';
+            document.getElementById('currentAction').innerHTML = `<span class="loader-spin"></span> Migrando Notas de Crédito...`;
+            
+            const startTime = Date.now();
+            
+            for (let i = 0; i < totalRecords; i += limit) {
+                if (shouldStop) {
+                    addResponse("🚫 Migración cancelada por el usuario.", "error");
+                    break;
+                }
+                
+                const blockNumber = Math.floor(i / limit) + 1;
+                const block = notasConVentas.slice(i, i + limit);
+                const percent = Math.round((i / totalRecords) * 100);
+                
+                progBar.style.width = `${percent}%`;
+                progBar.textContent = `${percent}%`;
+                document.getElementById('blockInfo').textContent = `${blockNumber} / ${totalBlocks}`;
+                document.getElementById('recordInfo').textContent = `${i} de ${totalRecords}`;
+                
+                if (i > 0) {
+                    const elapsed = Date.now() - startTime;
+                    const avgTimePerRecord = elapsed / i;
+                    const remainingRecords = totalRecords - i;
+                    const etaMs = remainingRecords * avgTimePerRecord;
+                    const etaSec = Math.round(etaMs / 1000);
+                    document.getElementById('timeInfo').textContent = etaSec > 60 ? `${Math.round(etaSec/60)} min aprox.` : `${etaSec} seg aprox.`;
+                }
+                
+                // Construir payload con NC + sus ventas originales (sin duplicados)
+                const ventasUnicas = new Map();
+                block.forEach(item => {
+                    // Agregar la nota de crédito
+                    ventasUnicas.set(item.notaCredito.saleID, item.notaCredito);
+                    // Agregar las ventas originales relacionadas
+                    item.ventasOriginales.forEach(vo => {
+                        ventasUnicas.set(vo.saleID, vo);
+                    });
+                });
+                
+                const salesPayload = Array.from(ventasUnicas.values());
+                const ncCount = block.length;
+                const voCount = salesPayload.length - ncCount;
+                
+                try {
+                    const res = await fetch(`${endpoint}?origin=${getDomain()}&forceOrigin=1`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Origin': `https://${getDomain()}.ambitretail.com` },
+                        body: JSON.stringify({ sales: salesPayload })
+                    });
+                    
+                    if (res.ok) {
+                        const result = await res.json();
+                        addResponse(`✓ Bloque ${blockNumber}: ${ncCount} NC + ${voCount} ventas originales enviadas`, 'success');
+                    } else {
+                        addResponse(`✗ Error en bloque ${blockNumber}`, 'error');
+                    }
+                } catch (err) {
+                    addResponse(`✗ Error de red: ${err.message}`, 'error');
+                }
+                
+                await new Promise(r => setTimeout(r, 600));
+            }
+            
+            progBar.style.width = `100%`;
+            progBar.textContent = `100%`;
+            document.getElementById('currentAction').textContent = shouldStop ? "Migración Interrumpida" : "✅ Migración Completada";
+            setTimeout(() => { if(!shouldStop) progContainer.style.display = 'none'; }, 3000);
         }
 
         async function migrateInventario() {
