@@ -1,460 +1,763 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ambit Retail - Gestor de Migración</title>
     <style>
-        /* ... (Estilos originales mantenidos) ... */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; min-height: 100vh; }
-        .container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        h1 { text-align: center; margin-bottom: 30px; color: #333; }
-        .section { margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #667eea; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: all 0.3s; }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-danger { background: #dc3545; color: white; }
-        .btn-success { background: #28a745; color: white; }
-        .btn-info { background: #17a2b8; color: white; }
-        .btn-warning { background: #ffc107; color: #333; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .migration-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        .response-panel { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; max-height: 400px; overflow-y: auto; font-family: monospace; }
-        .response-entry { margin-bottom: 5px; padding: 5px; border-bottom: 1px solid #333; }
-        .success { color: #75beff; }
-        .error { color: #f44336; }
+      /* ... (Estilos originales mantenidos) ... */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+      }
+      .section {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #667eea;
+      }
+      .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+      }
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+      .btn-danger {
+        background: #dc3545;
+        color: white;
+      }
+      .btn-success {
+        background: #28a745;
+        color: white;
+      }
+      .btn-info {
+        background: #17a2b8;
+        color: white;
+      }
+      .btn-warning {
+        background: #ffc107;
+        color: #333;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .migration-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+      }
+      .response-panel {
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        font-family: monospace;
+      }
+      .response-entry {
+        margin-bottom: 5px;
+        padding: 5px;
+        border-bottom: 1px solid #333;
+      }
+      .success {
+        color: #75beff;
+      }
+      .error {
+        color: #f44336;
+      }
 
-        #progressContainer {
-            display: none;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 2px solid #667eea;
+      #progressContainer {
+        display: none;
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 2px solid #667eea;
+      }
+      .progress-bar-bg {
+        background: #e9ecef;
+        height: 25px;
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 15px 0;
+        position: relative;
+      }
+      .progress-bar-fill {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        width: 0%;
+        height: 100%;
+        transition: width 0.4s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: bold;
+      }
+      .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+      }
+      .status-item {
+        font-size: 0.9em;
+        color: #555;
+      }
+      .status-item strong {
+        color: #667eea;
+      }
+
+      .loader-spin {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #667eea;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        animation: spin 1s linear infinite;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 10px;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        .progress-bar-bg {
-            background: #e9ecef;
-            height: 25px;
-            border-radius: 12px;
-            overflow: hidden;
-            margin: 15px 0;
-            position: relative;
+        100% {
+          transform: rotate(360deg);
         }
-        .progress-bar-fill {
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            width: 0%;
-            height: 100%;
-            transition: width 0.4s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .status-item { font-size: 0.9em; color: #555; }
-        .status-item strong { color: #667eea; }
-        
-        .loader-spin {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            animation: spin 1s linear infinite;
-            display: inline-block;
-            vertical-align: middle;
-            margin-right: 10px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>🚀 Gestor de Migración - Ambit Retail</h1>
+      <h1>🚀 Gestor de Migración - Ambit Retail</h1>
 
-        <div id="progressContainer">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="currentAction">Procesando...</h3>
-                <button class="btn btn-danger" onclick="abortMigration()" id="btnAbort">🛑 Detener Migración</button>
-            </div>
-            
-            <div class="progress-bar-bg">
-                <div id="progressBar" class="progress-bar-fill">0%</div>
-            </div>
-
-            <div class="status-grid">
-                <div class="status-item">📦 Bloque: <strong id="blockInfo">-</strong></div>
-                <div class="status-item">📊 Registros: <strong id="recordInfo">-</strong></div>
-                <div class="status-item">⏳ Restante: <strong id="timeInfo">Calculando...</strong></div>
-            </div>
+      <div id="progressContainer">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <h3 id="currentAction">Procesando...</h3>
+          <button
+            class="btn btn-danger"
+            onclick="abortMigration()"
+            id="btnAbort"
+          >
+            🛑 Detener Migración
+          </button>
         </div>
 
-        <div class="section">
-            <h2>📁 Cargar Datos JSON</h2>
-            <div class="file-upload">
-                <input type="file" id="jsonFile" accept=".json" />
-                <button class="btn btn-primary" onclick="loadJsonFile()">Cargar Archivo</button>
-            </div>
-            <div id="dataStats" class="data-stats" style="display: none; margin-top:15px;">
-                Registros cargados: Shops(<span id="shopsCount">0</span>), Items(<span id="itemsCount">0</span>), Sales(<span id="salesCount">0</span>)
-            </div>
+        <div class="progress-bar-bg">
+          <div id="progressBar" class="progress-bar-fill">0%</div>
         </div>
 
-        <div class="section">
-            <h2>⚙️ Configuración</h2>
-            <div class="config-inputs">
-                <label>Dominio:</label>
-                <input type="text" id="domainInput" placeholder="Ej: mi-tienda" style="padding:10px; border-radius:5px; border:1px solid #ddd; width:100%; margin-bottom: 10px;">
-                
-                <div style="display: flex; gap: 15px;">
-                    <div style="flex: 1;">
-                        <label>Límite por bloque:</label>
-                        <input type="number" id="blockLimit" value="100" style="padding:10px; border-radius:5px; border:1px solid #ddd; width: 100%;">
-                    </div>
-                    <div style="flex: 2;">
-                        <label>Filtrar por Shop IDs (separados por coma):</label>
-                        <input type="text" id="shopFilterInput" placeholder="Ej: 1, 2" style="padding:10px; border-radius:5px; border:1px solid #ddd; width: 100%;">
-                    </div>
-                </div>
-            </div>
+        <div class="status-grid">
+          <div class="status-item">
+            📦 Bloque: <strong id="blockInfo">-</strong>
+          </div>
+          <div class="status-item">
+            📊 Registros: <strong id="recordInfo">-</strong>
+          </div>
+          <div class="status-item">
+            ⏳ Restante: <strong id="timeInfo">Calculando...</strong>
+          </div>
         </div>
+      </div>
 
-        <div class="section">
-            <h2>🔄 Operaciones de Migración</h2>
-            <div class="migration-buttons">
-                <button class="btn btn-success" onclick="migrateShops()" id="btnShops" disabled>Migrar Locales</button>
-                <button class="btn btn-info" onclick="migrateClients()" id="btnClients" disabled>Migrar Clientes</button>
-                <button class="btn btn-warning" onclick="migrateAttributes()" id="btnAttributes" disabled>Migrar Atributos</button>
-                <button class="btn btn-primary" onclick="migrateItems()" id="btnItems" disabled>Migrar Items</button>
-                <button class="btn btn-danger" onclick="migrateSales()" id="btnSales1" disabled>Migrar Ventas</button>
-                <button class="btn btn-danger" onclick="migrateNoteSales()" id="btnSales2" disabled>Migrar Notas Crédito</button>
-                <button class="btn btn-danger" onclick="migrateInventario()" id="btnSales3" disabled>Migrar Inventario</button>
-            </div>
+      <div class="section">
+        <h2>📁 Cargar Datos JSON</h2>
+        <div class="file-upload">
+          <input type="file" id="jsonFile" accept=".json" />
+          <button class="btn btn-primary" onclick="loadJsonFile()">
+            Cargar Archivo
+          </button>
         </div>
+        <div
+          id="dataStats"
+          class="data-stats"
+          style="display: none; margin-top: 15px"
+        >
+          Registros cargados: Shops(<span id="shopsCount">0</span>), Items(<span
+            id="itemsCount"
+            >0</span
+          >), Sales(<span id="salesCount">0</span>)
+        </div>
+      </div>
 
-        <div class="section">
-            <h2>📊 Panel de Respuestas</h2>
-            <div class="response-panel" id="responsePanel"></div>
+      <div class="section">
+        <h2>⚙️ Configuración</h2>
+        <div class="config-inputs">
+          <label>Dominio:</label>
+          <input
+            type="text"
+            id="domainInput"
+            placeholder="Ej: mi-tienda"
+            style="
+              padding: 10px;
+              border-radius: 5px;
+              border: 1px solid #ddd;
+              width: 100%;
+              margin-bottom: 10px;
+            "
+          />
+
+          <div style="display: flex; gap: 15px">
+            <div style="flex: 1">
+              <label>Límite por bloque:</label>
+              <input
+                type="number"
+                id="blockLimit"
+                value="100"
+                style="
+                  padding: 10px;
+                  border-radius: 5px;
+                  border: 1px solid #ddd;
+                  width: 100%;
+                "
+              />
+            </div>
+            <div style="flex: 2">
+              <label>Filtrar por Shop IDs (separados por coma):</label>
+              <input
+                type="text"
+                id="shopFilterInput"
+                placeholder="Ej: 1, 2"
+                style="
+                  padding: 10px;
+                  border-radius: 5px;
+                  border: 1px solid #ddd;
+                  width: 100%;
+                "
+              />
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div class="section">
+        <h2>🔄 Operaciones de Migración</h2>
+        <div class="migration-buttons">
+          <button
+            class="btn btn-success"
+            onclick="migrateShops()"
+            id="btnShops"
+            disabled
+          >
+            Migrar Locales
+          </button>
+          <button
+            class="btn btn-info"
+            onclick="migrateClients()"
+            id="btnClients"
+            disabled
+          >
+            Migrar Clientes
+          </button>
+          <button
+            class="btn btn-warning"
+            onclick="migrateAttributes()"
+            id="btnAttributes"
+            disabled
+          >
+            Migrar Atributos
+          </button>
+          <button
+            class="btn btn-primary"
+            onclick="migrateItems()"
+            id="btnItems"
+            disabled
+          >
+            Migrar Items
+          </button>
+          <button
+            class="btn btn-danger"
+            onclick="migrateSales()"
+            id="btnSales1"
+            disabled
+          >
+            Migrar Ventas
+          </button>
+          <button
+            class="btn btn-danger"
+            onclick="migrateNoteSales()"
+            id="btnSales2"
+            disabled
+          >
+            Migrar Notas Crédito
+          </button>
+          <button
+            class="btn btn-danger"
+            onclick="migrateInventario()"
+            id="btnSales3"
+            disabled
+          >
+            Migrar Inventario
+          </button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>📊 Panel de Respuestas</h2>
+        <div class="response-panel" id="responsePanel"></div>
+      </div>
     </div>
 
     <script>
-        let jsonData = null;
-        let shouldStop = false; 
-        const API_BASE = 'https://admin.api.ambitretail.com';
-        const API_RETAIL= 'https://retail.api.ambitretail.com';
+      let jsonData = null;
+      let shouldStop = false;
+      const API_BASE = "https://admin.api.ambitretail.com";
+      const API_RETAIL = "https://retail.api.ambitretail.com";
 
-        // --- NUEVA FUNCIÓN DE FILTRADO ---
-        function getFilteredData(data, key) {
-            const filterValue = document.getElementById('shopFilterInput').value.trim();
-            if (!filterValue || !data) return data;
+      // --- NUEVA FUNCIÓN DE FILTRADO ---
+      function getFilteredData(data, key) {
+        const filterValue = document
+          .getElementById("shopFilterInput")
+          .value.trim();
+        if (!filterValue || !data) return data;
 
-            // Convertir "1, 2" en un array de strings ["1", "2"]
-            const allowedIds = filterValue.split(',').map(id => id.trim());
-            
-            addResponse(`🔍 Aplicando filtro para ShopIDs: ${allowedIds.join(', ')}`, 'info');
+        // Convertir "1, 2" en un array de strings ["1", "2"]
+        const allowedIds = filterValue.split(",").map((id) => id.trim());
 
-            // Filtrar las ventas basándose en shopID (asumiendo que los datos tienen esa propiedad)
-            return data.filter(item => {
-                // Se busca shopID o shop_id dependiendo del JSON
-                const shopId = item.shopID || item.shop_id || item.shopId;
-                return allowedIds.includes(String(shopId));
-            });
-        }
+        addResponse(
+          `🔍 Aplicando filtro para ShopIDs: ${allowedIds.join(", ")}`,
+          "info",
+        );
 
-        // --- FUNCIONES DE SOPORTE ---
-        function loadJsonFile() {
-            const file = document.getElementById('jsonFile').files[0];
-            if (!file) return alert("Selecciona un archivo");
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                jsonData = JSON.parse(e.target.result);
-                document.getElementById('dataStats').style.display = 'block';
-                document.getElementById('shopsCount').textContent = jsonData.shops?.length || 0;
-                document.getElementById('itemsCount').textContent = jsonData.items?.length || 0;
-                document.getElementById('salesCount').textContent = jsonData.sales?.length || 0;
-                enableButtons();
-            };
-            reader.readAsText(file);
-        }
+        // Filtrar las ventas basándose en shopID (asumiendo que los datos tienen esa propiedad)
+        return data.filter((item) => {
+          // Se busca shopID o shop_id dependiendo del JSON
+          const shopId = item.shopID || item.shop_id || item.shopId;
+          return allowedIds.includes(String(shopId));
+        });
+      }
 
-        function enableButtons() {
-            document.querySelectorAll('.migration-buttons .btn').forEach(b => b.disabled = false);
-        }
+      // --- FUNCIONES DE SOPORTE ---
+      function loadJsonFile() {
+        const file = document.getElementById("jsonFile").files[0];
+        if (!file) return alert("Selecciona un archivo");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          jsonData = JSON.parse(e.target.result);
+          document.getElementById("dataStats").style.display = "block";
+          document.getElementById("shopsCount").textContent =
+            jsonData.shops?.length || 0;
+          document.getElementById("itemsCount").textContent =
+            jsonData.items?.length || 0;
+          document.getElementById("salesCount").textContent =
+            jsonData.sales?.length || 0;
+          enableButtons();
+        };
+        reader.readAsText(file);
+      }
 
-        function getDomain() { return document.getElementById('domainInput').value.trim(); }
-        function getBlockLimit() { return parseInt(document.getElementById('blockLimit').value) || 100; }
+      function enableButtons() {
+        document
+          .querySelectorAll(".migration-buttons .btn")
+          .forEach((b) => (b.disabled = false));
+      }
 
-        function abortMigration() {
-            shouldStop = true;
-            addResponse("🛑 Petición de parada recibida. Se detendrá al finalizar el bloque actual.", "error");
-        }
+      function getDomain() {
+        return document.getElementById("domainInput").value.trim();
+      }
+      function getBlockLimit() {
+        return parseInt(document.getElementById("blockLimit").value) || 100;
+      }
 
-        function addResponse(msg, type) {
-            const p = document.getElementById('responsePanel');
-            const colorClass = type === 'info' ? 'success' : type; // Reuso de clase success para info si no existe
-            p.innerHTML = `<div class="response-entry ${colorClass}">${new Date().toLocaleTimeString()} - ${msg}</div>` + p.innerHTML;
-        }
+      function abortMigration() {
+        shouldStop = true;
+        addResponse(
+          "🛑 Petición de parada recibida. Se detendrá al finalizar el bloque actual.",
+          "error",
+        );
+      }
 
-        // --- MOTOR DE MIGRACIÓN ---
-        async function sendInBlocks(data, endpoint, dataKey, dataKeyOptions = []) {
-            if (!data || data.length === 0) return addResponse(`No hay datos para ${dataKey}`, 'error');
+      function addResponse(msg, type) {
+        const p = document.getElementById("responsePanel");
+        const colorClass = type === "info" ? "success" : type; // Reuso de clase success para info si no existe
+        p.innerHTML =
+          `<div class="response-entry ${colorClass}">${new Date().toLocaleTimeString()} - ${msg}</div>` +
+          p.innerHTML;
+      }
 
-            shouldStop = false;
-            const limit = getBlockLimit();
-            const totalRecords = data.length;
-            const totalBlocks = Math.ceil(totalRecords / limit);
-            const progContainer = document.getElementById('progressContainer');
-            const progBar = document.getElementById('progressBar');
-            
-            progContainer.style.display = 'block';
-            document.getElementById('currentAction').innerHTML = `<span class="loader-spin"></span> Migrando ${dataKey}...`;
+      function buildItemsPayload(items = [], itemMatrixes = []) {
+        const requiredMatrixIds = new Set();
 
-            const startTime = Date.now();
+        const sanitizedItems = items.map((item) => {
+          if (item.itemMatrixID)
+            requiredMatrixIds.add(String(item.itemMatrixID));
+          return {
+            ...item,
+            itemShops: [],
+          };
+        });
 
-            for (let i = 0; i < totalRecords; i += limit) {
-                if (shouldStop) {
-                    addResponse("🚫 Migración cancelada por el usuario.", "error");
-                    break;
-                }
+        const sanitizedItemMatrixes = itemMatrixes.filter((matrix) =>
+          requiredMatrixIds.has(String(matrix.itemMatrixID)),
+        );
 
-                const blockNumber = Math.floor(i / limit) + 1;
-                const block = data.slice(i, i + limit);
-                const percent = Math.round((i / totalRecords) * 100);
+        return {
+          items: sanitizedItems,
+          itemMatrixes: sanitizedItemMatrixes,
+        };
+      }
 
-                progBar.style.width = `${percent}%`;
-                progBar.textContent = `${percent}%`;
-                document.getElementById('blockInfo').textContent = `${blockNumber} / ${totalBlocks}`;
-                document.getElementById('recordInfo').textContent = `${i} de ${totalRecords}`;
+      // --- MOTOR DE MIGRACIÓN ---
+      async function sendInBlocks(
+        data,
+        endpoint,
+        dataKey,
+        dataKeyOptions = [],
+      ) {
+        if (!data || data.length === 0)
+          return addResponse(`No hay datos para ${dataKey}`, "error");
 
-                if (i > 0) {
-                    const elapsed = Date.now() - startTime;
-                    const avgTimePerRecord = elapsed / i;
-                    const remainingRecords = totalRecords - i;
-                    const etaMs = remainingRecords * avgTimePerRecord;
-                    const etaSec = Math.round(etaMs / 1000);
-                    document.getElementById('timeInfo').textContent = etaSec > 60 ? `${Math.round(etaSec/60)} min aprox.` : `${etaSec} seg aprox.`;
-                }
+        shouldStop = false;
+        const limit = getBlockLimit();
+        const totalRecords = data.length;
+        const totalBlocks = Math.ceil(totalRecords / limit);
+        const progContainer = document.getElementById("progressContainer");
+        const progBar = document.getElementById("progressBar");
 
-                let payload = { [dataKey]: block };
-                if (dataKeyOptions.length > 0) payload.itemMatrixes = dataKeyOptions;
+        progContainer.style.display = "block";
+        document.getElementById("currentAction").innerHTML =
+          `<span class="loader-spin"></span> Migrando ${dataKey}...`;
 
-                try {
-                    const res = await fetch(`${endpoint}?origin=${getDomain()}&forceOrigin=1`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Origin': `https://${getDomain()}.ambitretail.com` },
-                        body: JSON.stringify(payload)
-                    });
+        const startTime = Date.now();
 
-                    if (res.ok) {
-                        addResponse(`✓ Bloque ${blockNumber} procesado.`, 'success');
-                    } else {
-                        addResponse(`✗ Error en bloque ${blockNumber}`, 'error');
-                    }
-                } catch (err) {
-                    addResponse(`✗ Error de red: ${err.message}`, 'error');
-                }
+        for (let i = 0; i < totalRecords; i += limit) {
+          if (shouldStop) {
+            addResponse("🚫 Migración cancelada por el usuario.", "error");
+            break;
+          }
 
-                await new Promise(r => setTimeout(r, 600));
+          const blockNumber = Math.floor(i / limit) + 1;
+          const block = data.slice(i, i + limit);
+          const percent = Math.round((i / totalRecords) * 100);
+
+          progBar.style.width = `${percent}%`;
+          progBar.textContent = `${percent}%`;
+          document.getElementById("blockInfo").textContent =
+            `${blockNumber} / ${totalBlocks}`;
+          document.getElementById("recordInfo").textContent =
+            `${i} de ${totalRecords}`;
+
+          if (i > 0) {
+            const elapsed = Date.now() - startTime;
+            const avgTimePerRecord = elapsed / i;
+            const remainingRecords = totalRecords - i;
+            const etaMs = remainingRecords * avgTimePerRecord;
+            const etaSec = Math.round(etaMs / 1000);
+            document.getElementById("timeInfo").textContent =
+              etaSec > 60
+                ? `${Math.round(etaSec / 60)} min aprox.`
+                : `${etaSec} seg aprox.`;
+          }
+
+          let payload = { [dataKey]: block };
+          let { itemMatrixes } = buildItemsPayload(block, dataKeyOptions);
+          if (dataKeyOptions.length > 0) payload.itemMatrixes = itemMatrixes;
+          try {
+            const res = await fetch(
+              `${endpoint}?origin=${getDomain()}&forceOrigin=1`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Origin: `https://${getDomain()}.ambitretail.com`,
+                },
+                body: JSON.stringify(payload),
+              },
+            );
+
+            if (res.ok) {
+              addResponse(`✓ Bloque ${blockNumber} procesado.`, "success");
+            } else {
+              addResponse(`✗ Error en bloque ${blockNumber}`, "error");
             }
+          } catch (err) {
+            addResponse(`✗ Error de red: ${err.message}`, "error");
+          }
 
-            progBar.style.width = `100%`;
-            progBar.textContent = `100%`;
-            document.getElementById('currentAction').textContent = shouldStop ? "Migración Interrumpida" : "✅ Migración Completada";
-            setTimeout(() => { if(!shouldStop) progContainer.style.display = 'none'; }, 3000);
+          await new Promise((r) => setTimeout(r, 600));
         }
 
-        // --- FUNCIONES DE MIGRACIÓN CON FILTRADO APLICADO ---
-        async function migrateShops() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_BASE}/m/rest/local/importarLocalesLightspeed/${domain}`;
-            await sendInBlocks(jsonData.shops, endpoint, 'shops');
-        }
+        progBar.style.width = `100%`;
+        progBar.textContent = `100%`;
+        document.getElementById("currentAction").textContent = shouldStop
+          ? "Migración Interrumpida"
+          : "✅ Migración Completada";
+        setTimeout(() => {
+          if (!shouldStop) progContainer.style.display = "none";
+        }, 3000);
+      }
 
-        async function migrateClients() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed/${domain}`;
-            await sendInBlocks(jsonData.clients || [], endpoint, 'clients');
-        }
+      // --- FUNCIONES DE MIGRACIÓN CON FILTRADO APLICADO ---
+      async function migrateShops() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_BASE}/m/rest/local/importarLocalesLightspeed/${domain}`;
+        await sendInBlocks(jsonData.shops, endpoint, "shops");
+      }
 
-        async function migrateAttributes() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
-            await sendInBlocks(jsonData.itemMatrixes, endpoint, 'itemMatrixes');
-        }
+      async function migrateClients() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed/${domain}`;
+        await sendInBlocks(jsonData.clients || [], endpoint, "clients");
+      }
 
-        async function migrateItems() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
-            await sendInBlocks(jsonData.items, endpoint, 'items', jsonData.itemMatrixes);
-        }
+      async function migrateAttributes() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
+        await sendInBlocks(jsonData.itemMatrixes, endpoint, "itemMatrixes");
+      }
 
-        async function migrateSales() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_RETAIL}/m/rest/venta/importarVentaLightspeed`;
-            // FILTRO APLICADO AQUÍ
-            const filteredSales = getFilteredData(jsonData.sales, 'sales');
-            await sendInBlocks(filteredSales, endpoint, 'sales');
-        }
+      async function migrateItems() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_RETAIL}/m/rest/producto/importarProductosDeLightspeed`;
+        await sendInBlocks(
+          jsonData.items,
+          endpoint,
+          "items",
+          jsonData.itemMatrixes,
+        );
+      }
 
-        async function migrateNoteSales() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
-            // FILTRO APLICADO AQUÍ
-            const filteredSales = getFilteredData(jsonData.sales, 'sales');
-            
-            // Separar ventas normales de notas de crédito (ventas con total negativo)
-            const allSales = filteredSales || [];
-            
-            // Construir índice de saleLineID -> sale para encontrar ventas originales
-            const saleLineIDToSale = {};
-            allSales.forEach(sale => {
-                if (!sale.SaleLines?.SaleLine) return;
-                const lines = Array.isArray(sale.SaleLines.SaleLine) ? sale.SaleLines.SaleLine : [sale.SaleLines.SaleLine];
-                lines.forEach(line => {
-                    if (line.saleLineID) {
-                        saleLineIDToSale[line.saleLineID] = sale;
-                    }
-                });
-            });
-            
-            // Identificar notas de crédito (ventas con calcTotal negativo y líneas con cantidad negativa)
-            const notasCredito = allSales.filter(sale => {
-                if (sale.voided === 'true') return false;
-                if (!sale.completed || sale.completed === 'false') return false;
-                const calcTotal = parseFloat(sale.calcTotal) || 0;
-                if (calcTotal >= 0) return false;
-                if (!sale.SaleLines?.SaleLine) return false;
-                const lines = Array.isArray(sale.SaleLines.SaleLine) ? sale.SaleLines.SaleLine : [sale.SaleLines.SaleLine];
-                return lines.some(ln => (parseFloat(ln.unitQuantity) || 0) < 0);
-            });
-            
-            if (notasCredito.length === 0) {
-                return addResponse('No se encontraron notas de crédito para migrar', 'error');
+      async function migrateSales() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_RETAIL}/m/rest/venta/importarVentaLightspeed`;
+        // FILTRO APLICADO AQUÍ
+        const filteredSales = getFilteredData(jsonData.sales, "sales");
+        await sendInBlocks(filteredSales, endpoint, "sales");
+      }
+
+      async function migrateNoteSales() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_RETAIL}/m/rest/notacredito/importarNotaCreditoLightspeed`;
+        // FILTRO APLICADO AQUÍ
+        const filteredSales = getFilteredData(jsonData.sales, "sales");
+
+        // Separar ventas normales de notas de crédito (ventas con total negativo)
+        const allSales = filteredSales || [];
+
+        // Construir índice de saleLineID -> sale para encontrar ventas originales
+        const saleLineIDToSale = {};
+        allSales.forEach((sale) => {
+          if (!sale.SaleLines?.SaleLine) return;
+          const lines = Array.isArray(sale.SaleLines.SaleLine)
+            ? sale.SaleLines.SaleLine
+            : [sale.SaleLines.SaleLine];
+          lines.forEach((line) => {
+            if (line.saleLineID) {
+              saleLineIDToSale[line.saleLineID] = sale;
             }
-            
-            addResponse(`📋 Encontradas ${notasCredito.length} notas de crédito para procesar`, 'info');
-            
-            // Para cada nota de crédito, encontrar sus ventas originales relacionadas
-            const notasConVentasOriginales = notasCredito.map(nc => {
-                const lines = Array.isArray(nc.SaleLines.SaleLine) ? nc.SaleLines.SaleLine : [nc.SaleLines.SaleLine];
-                const ventasRelacionadas = new Set();
-                
-                lines.forEach(line => {
-                    const parentSaleLineID = line.parentSaleLineID;
-                    if (parentSaleLineID && saleLineIDToSale[parentSaleLineID]) {
-                        ventasRelacionadas.add(saleLineIDToSale[parentSaleLineID]);
-                    }
-                });
-                
-                return {
-                    notaCredito: nc,
-                    ventasOriginales: Array.from(ventasRelacionadas)
-                };
-            });
-            
-            // Contar cuántas NC tienen ventas relacionadas encontradas
-            const conVentas = notasConVentasOriginales.filter(x => x.ventasOriginales.length > 0).length;
-            const sinVentas = notasConVentasOriginales.filter(x => x.ventasOriginales.length === 0).length;
-            addResponse(`✓ ${conVentas} NC con venta original encontrada, ${sinVentas} sin venta en el JSON`, 'info');
-            
-            // Enviar en bloques incluyendo las ventas originales
-            await sendNotaCreditoBlocks(notasConVentasOriginales, endpoint);
-        }
-        
-        async function sendNotaCreditoBlocks(notasConVentas, endpoint) {
-            if (!notasConVentas || notasConVentas.length === 0) return;
-            
-            shouldStop = false;
-            const limit = getBlockLimit();
-            const totalRecords = notasConVentas.length;
-            const totalBlocks = Math.ceil(totalRecords / limit);
-            const progContainer = document.getElementById('progressContainer');
-            const progBar = document.getElementById('progressBar');
-            
-            progContainer.style.display = 'block';
-            document.getElementById('currentAction').innerHTML = `<span class="loader-spin"></span> Migrando Notas de Crédito...`;
-            
-            const startTime = Date.now();
-            
-            for (let i = 0; i < totalRecords; i += limit) {
-                if (shouldStop) {
-                    addResponse("🚫 Migración cancelada por el usuario.", "error");
-                    break;
-                }
-                
-                const blockNumber = Math.floor(i / limit) + 1;
-                const block = notasConVentas.slice(i, i + limit);
-                const percent = Math.round((i / totalRecords) * 100);
-                
-                progBar.style.width = `${percent}%`;
-                progBar.textContent = `${percent}%`;
-                document.getElementById('blockInfo').textContent = `${blockNumber} / ${totalBlocks}`;
-                document.getElementById('recordInfo').textContent = `${i} de ${totalRecords}`;
-                
-                if (i > 0) {
-                    const elapsed = Date.now() - startTime;
-                    const avgTimePerRecord = elapsed / i;
-                    const remainingRecords = totalRecords - i;
-                    const etaMs = remainingRecords * avgTimePerRecord;
-                    const etaSec = Math.round(etaMs / 1000);
-                    document.getElementById('timeInfo').textContent = etaSec > 60 ? `${Math.round(etaSec/60)} min aprox.` : `${etaSec} seg aprox.`;
-                }
-                
-                // Construir payload con NC + sus ventas originales (sin duplicados)
-                const ventasUnicas = new Map();
-                block.forEach(item => {
-                    // Agregar la nota de crédito
-                    ventasUnicas.set(item.notaCredito.saleID, item.notaCredito);
-                    // Agregar las ventas originales relacionadas
-                    item.ventasOriginales.forEach(vo => {
-                        ventasUnicas.set(vo.saleID, vo);
-                    });
-                });
-                
-                const salesPayload = Array.from(ventasUnicas.values());
-                const ncCount = block.length;
-                const voCount = salesPayload.length - ncCount;
-                
-                try {
-                    const res = await fetch(`${endpoint}?origin=${getDomain()}&forceOrigin=1`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Origin': `https://${getDomain()}.ambitretail.com` },
-                        body: JSON.stringify({ sales: salesPayload })
-                    });
-                    
-                    if (res.ok) {
-                        const result = await res.json();
-                        addResponse(`✓ Bloque ${blockNumber}: ${ncCount} NC + ${voCount} ventas originales enviadas`, 'success');
-                    } else {
-                        addResponse(`✗ Error en bloque ${blockNumber}`, 'error');
-                    }
-                } catch (err) {
-                    addResponse(`✗ Error de red: ${err.message}`, 'error');
-                }
-                
-                await new Promise(r => setTimeout(r, 600));
-            }
-            
-            progBar.style.width = `100%`;
-            progBar.textContent = `100%`;
-            document.getElementById('currentAction').textContent = shouldStop ? "Migración Interrumpida" : "✅ Migración Completada";
-            setTimeout(() => { if(!shouldStop) progContainer.style.display = 'none'; }, 3000);
+          });
+        });
+
+        // Identificar notas de crédito (ventas con calcTotal negativo y líneas con cantidad negativa)
+        const notasCredito = allSales.filter((sale) => {
+          if (sale.voided === "true") return false;
+          if (!sale.completed || sale.completed === "false") return false;
+          const calcTotal = parseFloat(sale.calcTotal) || 0;
+          if (calcTotal >= 0) return false;
+          if (!sale.SaleLines?.SaleLine) return false;
+          const lines = Array.isArray(sale.SaleLines.SaleLine)
+            ? sale.SaleLines.SaleLine
+            : [sale.SaleLines.SaleLine];
+          return lines.some((ln) => (parseFloat(ln.unitQuantity) || 0) < 0);
+        });
+
+        if (notasCredito.length === 0) {
+          return addResponse(
+            "No se encontraron notas de crédito para migrar",
+            "error",
+          );
         }
 
-        async function migrateInventario() {
-            const domain = getDomain(); if (!domain || !jsonData) return;
-            const endpoint = `${API_RETAIL}/m/rest/movimientoalmaceninsumo/aperturarStockItemsLightspeed`;
-            await sendInBlocks(jsonData.items, endpoint, 'items');
+        addResponse(
+          `📋 Encontradas ${notasCredito.length} notas de crédito para procesar`,
+          "info",
+        );
+
+        // Para cada nota de crédito, encontrar sus ventas originales relacionadas
+        const notasConVentasOriginales = notasCredito.map((nc) => {
+          const lines = Array.isArray(nc.SaleLines.SaleLine)
+            ? nc.SaleLines.SaleLine
+            : [nc.SaleLines.SaleLine];
+          const ventasRelacionadas = new Set();
+
+          lines.forEach((line) => {
+            const parentSaleLineID = line.parentSaleLineID;
+            if (parentSaleLineID && saleLineIDToSale[parentSaleLineID]) {
+              ventasRelacionadas.add(saleLineIDToSale[parentSaleLineID]);
+            }
+          });
+
+          return {
+            notaCredito: nc,
+            ventasOriginales: Array.from(ventasRelacionadas),
+          };
+        });
+
+        // Contar cuántas NC tienen ventas relacionadas encontradas
+        const conVentas = notasConVentasOriginales.filter(
+          (x) => x.ventasOriginales.length > 0,
+        ).length;
+        const sinVentas = notasConVentasOriginales.filter(
+          (x) => x.ventasOriginales.length === 0,
+        ).length;
+        addResponse(
+          `✓ ${conVentas} NC con venta original encontrada, ${sinVentas} sin venta en el JSON`,
+          "info",
+        );
+
+        // Enviar en bloques incluyendo las ventas originales
+        await sendNotaCreditoBlocks(notasConVentasOriginales, endpoint);
+      }
+
+      async function sendNotaCreditoBlocks(notasConVentas, endpoint) {
+        if (!notasConVentas || notasConVentas.length === 0) return;
+
+        shouldStop = false;
+        const limit = getBlockLimit();
+        const totalRecords = notasConVentas.length;
+        const totalBlocks = Math.ceil(totalRecords / limit);
+        const progContainer = document.getElementById("progressContainer");
+        const progBar = document.getElementById("progressBar");
+
+        progContainer.style.display = "block";
+        document.getElementById("currentAction").innerHTML =
+          `<span class="loader-spin"></span> Migrando Notas de Crédito...`;
+
+        const startTime = Date.now();
+
+        for (let i = 0; i < totalRecords; i += limit) {
+          if (shouldStop) {
+            addResponse("🚫 Migración cancelada por el usuario.", "error");
+            break;
+          }
+
+          const blockNumber = Math.floor(i / limit) + 1;
+          const block = notasConVentas.slice(i, i + limit);
+          const percent = Math.round((i / totalRecords) * 100);
+
+          progBar.style.width = `${percent}%`;
+          progBar.textContent = `${percent}%`;
+          document.getElementById("blockInfo").textContent =
+            `${blockNumber} / ${totalBlocks}`;
+          document.getElementById("recordInfo").textContent =
+            `${i} de ${totalRecords}`;
+
+          if (i > 0) {
+            const elapsed = Date.now() - startTime;
+            const avgTimePerRecord = elapsed / i;
+            const remainingRecords = totalRecords - i;
+            const etaMs = remainingRecords * avgTimePerRecord;
+            const etaSec = Math.round(etaMs / 1000);
+            document.getElementById("timeInfo").textContent =
+              etaSec > 60
+                ? `${Math.round(etaSec / 60)} min aprox.`
+                : `${etaSec} seg aprox.`;
+          }
+
+          // Construir payload con NC + sus ventas originales (sin duplicados)
+          const ventasUnicas = new Map();
+          block.forEach((item) => {
+            // Agregar la nota de crédito
+            ventasUnicas.set(item.notaCredito.saleID, item.notaCredito);
+            // Agregar las ventas originales relacionadas
+            item.ventasOriginales.forEach((vo) => {
+              ventasUnicas.set(vo.saleID, vo);
+            });
+          });
+
+          const salesPayload = Array.from(ventasUnicas.values());
+          const ncCount = block.length;
+          const voCount = salesPayload.length - ncCount;
+
+          try {
+            const res = await fetch(
+              `${endpoint}?origin=${getDomain()}&forceOrigin=1`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Origin: `https://${getDomain()}.ambitretail.com`,
+                },
+                body: JSON.stringify({ sales: salesPayload }),
+              },
+            );
+
+            if (res.ok) {
+              const result = await res.json();
+              addResponse(
+                `✓ Bloque ${blockNumber}: ${ncCount} NC + ${voCount} ventas originales enviadas`,
+                "success",
+              );
+            } else {
+              addResponse(`✗ Error en bloque ${blockNumber}`, "error");
+            }
+          } catch (err) {
+            addResponse(`✗ Error de red: ${err.message}`, "error");
+          }
+
+          await new Promise((r) => setTimeout(r, 600));
         }
+
+        progBar.style.width = `100%`;
+        progBar.textContent = `100%`;
+        document.getElementById("currentAction").textContent = shouldStop
+          ? "Migración Interrumpida"
+          : "✅ Migración Completada";
+        setTimeout(() => {
+          if (!shouldStop) progContainer.style.display = "none";
+        }, 3000);
+      }
+
+      async function migrateInventario() {
+        const domain = getDomain();
+        if (!domain || !jsonData) return;
+        const endpoint = `${API_RETAIL}/m/rest/movimientoalmaceninsumo/aperturarStockItemsLightspeed`;
+        await sendInBlocks(jsonData.items, endpoint, "items");
+      }
     </script>
-</body>
+  </body>
 </html>
