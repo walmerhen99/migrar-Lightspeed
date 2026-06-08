@@ -413,6 +413,35 @@
           p.innerHTML;
       }
 
+      function normalizeSaleLines(sale) {
+        if (!sale?.SaleLines?.SaleLine) return [];
+        return Array.isArray(sale.SaleLines.SaleLine)
+          ? sale.SaleLines.SaleLine
+          : [sale.SaleLines.SaleLine];
+      }
+
+      function isPureCreditNoteSale(sale) {
+        if (sale.voided === "true") return false;
+        if (!sale.completed || sale.completed === "false") return false;
+
+        const calcTotal = parseFloat(sale.calcTotal) || 0;
+        if (calcTotal >= 0) return false;
+
+        const lines = normalizeSaleLines(sale).filter(
+          (line) => (parseFloat(line.unitQuantity) || 0) !== 0,
+        );
+        if (lines.length === 0) return false;
+
+        const hasNegativeLines = lines.some(
+          (line) => (parseFloat(line.unitQuantity) || 0) < 0,
+        );
+        const hasPositiveLines = lines.some(
+          (line) => (parseFloat(line.unitQuantity) || 0) > 0,
+        );
+
+        return hasNegativeLines && !hasPositiveLines;
+      }
+
       function buildItemsPayload(items = [], itemMatrixes = []) {
         const requiredMatrixIds = new Set();
 
@@ -537,7 +566,7 @@
         const domain = getDomain();
         if (!domain || !jsonData) return;
         const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed/${domain}`;
-        await sendInBlocks(jsonData.clients || [], endpoint, "clients");
+        await sendInBlocks(jsonData.customers || [], endpoint, "clients");
       }
 
       async function migrateAttributes() {
@@ -581,10 +610,7 @@
         // Construir índice de saleLineID -> sale para encontrar ventas originales
         const saleLineIDToSale = {};
         allSales.forEach((sale) => {
-          if (!sale.SaleLines?.SaleLine) return;
-          const lines = Array.isArray(sale.SaleLines.SaleLine)
-            ? sale.SaleLines.SaleLine
-            : [sale.SaleLines.SaleLine];
+          const lines = normalizeSaleLines(sale);
           lines.forEach((line) => {
             if (line.saleLineID) {
               saleLineIDToSale[line.saleLineID] = sale;
@@ -592,23 +618,33 @@
           });
         });
 
-        // Identificar notas de crédito (ventas con calcTotal negativo y líneas con cantidad negativa)
-        const notasCredito = allSales.filter((sale) => {
-          if (sale.voided === "true") return false;
-          if (!sale.completed || sale.completed === "false") return false;
-          const calcTotal = parseFloat(sale.calcTotal) || 0;
-          if (calcTotal >= 0) return false;
-          if (!sale.SaleLines?.SaleLine) return false;
-          const lines = Array.isArray(sale.SaleLines.SaleLine)
-            ? sale.SaleLines.SaleLine
-            : [sale.SaleLines.SaleLine];
-          return lines.some((ln) => (parseFloat(ln.unitQuantity) || 0) < 0);
+        // Identificar solo notas de crédito puras; excluye ventas mixtas con devolución + venta.
+        const notasCredito = allSales.filter(isPureCreditNoteSale);
+        const mixedSalesExcluded = allSales.filter((sale) => {
+          const lines = normalizeSaleLines(sale).filter(
+            (line) => (parseFloat(line.unitQuantity) || 0) !== 0,
+          );
+          if (lines.length === 0) return false;
+          const hasNegativeLines = lines.some(
+            (line) => (parseFloat(line.unitQuantity) || 0) < 0,
+          );
+          const hasPositiveLines = lines.some(
+            (line) => (parseFloat(line.unitQuantity) || 0) > 0,
+          );
+          return hasNegativeLines && hasPositiveLines;
         });
 
         if (notasCredito.length === 0) {
           return addResponse(
             "No se encontraron notas de crédito para migrar",
             "error",
+          );
+        }
+
+        if (mixedSalesExcluded.length > 0) {
+          addResponse(
+            `⚠️ ${mixedSalesExcluded.length} ventas mixtas fueron excluidas de notas de crédito.`,
+            "info",
           );
         }
 
@@ -619,9 +655,7 @@
 
         // Para cada nota de crédito, encontrar sus ventas originales relacionadas
         const notasConVentasOriginales = notasCredito.map((nc) => {
-          const lines = Array.isArray(nc.SaleLines.SaleLine)
-            ? nc.SaleLines.SaleLine
-            : [nc.SaleLines.SaleLine];
+          const lines = normalizeSaleLines(nc);
           const ventasRelacionadas = new Set();
 
           lines.forEach((line) => {
