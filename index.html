@@ -565,7 +565,7 @@
       async function migrateClients() {
         const domain = getDomain();
         if (!domain || !jsonData) return;
-        const endpoint = `${API_BASE}/m/rest/cliente/importarClientesLightspeed`;
+        const endpoint = `${API_RETAIL}/m/rest/cliente/importarClientesLightspeed`;
         await sendInBlocks(jsonData.customers || [], endpoint, "customers");
       }
 
